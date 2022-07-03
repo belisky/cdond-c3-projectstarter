@@ -1,6 +1,6 @@
-version: '2.1'
+version: 2.1
 orbs:
-  node: circleci/node:4.1
+  node: circleci/node@5.0.2
   slack: circleci/slack@4.10.1
 
 # Define a job to be invoked later in a workflow.
