@@ -1,4 +1,7 @@
-version: 2.1
+version: '2.1'
+orbs:
+  node: 'circleci/node:4.1'
+  slack: circleci/slack@4.10.1
 
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
@@ -95,8 +98,30 @@ jobs:
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
             
+
+ 
+  deploy:
+    executor:
+      name: node/default
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          command: npm run deploy
+      - slack/notify:
+          channel: '#default,#alx-devops'
+          event: fail
+          template: basic_fail_1
+ 
+
+
+            
  
 workflows:
+  deploy_and_notify:
+    jobs:
+      - deploy:
+          context: slack-secrets
   default:
     jobs:
       - build-frontend
