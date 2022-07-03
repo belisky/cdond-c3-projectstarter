@@ -52,8 +52,8 @@ jobs:
           command: |
             cd frontend
             npm install
-            npm run test      
-      
+            npm run test   
+                 
   test-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -66,6 +66,32 @@ jobs:
             cd backend
             npm install
             npm run test
+
+  scan-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+      # Docker image here
+    steps:
+      - checkout
+      - run:
+          name: Scan Front-end
+          command: |
+            cd frontend
+            npm install
+            npm audit --audit-level=critical
+
+  scan-backend:
+    docker:
+      - image: circleci/node:13.8.0
+      # Docker image here
+    steps:
+      - checkout
+      - run:
+          name: Scan Back-end
+          command: |
+            cd backend
+            npm install
+            npm audit --audit-level=critical
             
  
 workflows:
@@ -77,3 +103,8 @@ workflows:
           requires: [build-frontend]
       - test-backend:
           requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
+      - scan-backend:
+          requires: [build-backend]
+
