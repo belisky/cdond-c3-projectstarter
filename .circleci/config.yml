@@ -156,21 +156,7 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1   
-            
-
  
-  deploy:
-    executor:
-      name: node/default
-    steps:
-      - checkout
-      - node/install-packages
-      - run:
-          command: npm run deploy
-      - slack/notify:
-          channel: '#default,#alx-devops'
-          event: fail
-          template: basic_fail_1
 
   deploy-infrastructure:
     docker:
@@ -265,6 +251,8 @@ run-migrations:
       # Checkout code from git
       - checkout
       - aws-cli/setup
+      - restore_cache:
+          keys: ["backend-build"]
       - run:
           name: Run migrations
           command: |
