@@ -5,6 +5,42 @@ orbs:
 
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
+commands:
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      workflow_id:
+        type: string
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |            
+            aws s3 rm --recursive s3://udapeople-<<parameters.workflow_id>>            
+            aws cloudformation delete-stack --stack-name "frontend-<<parameters.workflow_id>>"
+            aws cloudformation delete-stack --stack-name "backend-<<parameters.workflow_id>>"
+
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+   
+    steps:
+      # Trigger rollback jobs if the smoke tests or any following jobs fail.
+      # Revert the last migration (IF a new migration was applied) on the database to that it goes back to the way it was before. You can use that value you saved in MemStash.io to know if you should revert any migrations.
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
+            export SUCCESS=$(curl -H "token: << pipeline.parameters.memstash-token >>" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
+            if(( $SUCCESS==1 )); 
+            then
+              cd ~/project/backend
+              npm install
+              npm run migrations:revert
+            fi
+
+
+
 jobs:
   build-frontend:
     docker:
@@ -19,11 +55,16 @@ jobs:
             cd frontend
             npm install
             npm run build
-            # Your code here
-            
       - save_cache:
-          paths: [frontend/node_modules]
-          key: frontend-build
+        paths: [frontend/node_modules]
+        key: frontend-build 
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - slack/notify:
+          event: pass
+          template: success_tagged_deploy_1           
+      
 
   build-backend:
     docker:
@@ -38,11 +79,17 @@ jobs:
             cd backend
             npm install
             npm run build
-             # Your code here
+        
             
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - slack/notify:
+          event: pass
+          template: success_tagged_deploy_1
           
   test-frontend:
     docker:
@@ -55,7 +102,10 @@ jobs:
           command: |
             cd frontend
             npm install
-            npm run test   
+            npm run test
+      - slack/notify:
+        event: fail
+        template: basic_fail_1   
                  
   test-backend:
     docker:
@@ -69,6 +119,9 @@ jobs:
             cd backend
             npm install
             npm run test
+      - slack/notify:
+        event: fail
+        template: basic_fail_1   
 
   scan-frontend:
     docker:
@@ -83,6 +136,9 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
+      - slack/notify:
+        event: fail
+        template: basic_fail_1   
 
   scan-backend:
     docker:
@@ -97,6 +153,10 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
+
+      - slack/notify:
+        event: fail
+        template: basic_fail_1   
             
 
  
@@ -120,22 +180,52 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Deploy Infrastructure
+          name: Ensure backend infrastructure exist
           command: |
-            aws install tar,gzip
-             
+            yum install -y tar gzip
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
+              --tags project=udapeople
+
+            export BACKEND_URL=$(aws cloudformation describe-stacks \
+              --stack-name backend-"${CIRCLE_WORKFLOW_ID}" \
+              --query "Stacks[0].Outputs[?OutputKey=='BackendURL'].OutputValue" \
+              --no-paginate --output text)
+            echo $BACKEND_URL
+            curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" \
+              --request PUT --data "${BACKEND_URL}" \
+              https://api.memstash.io/values/backendurl
+
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project=udapeople-frontend \
+              --stack-name frontend-"${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            export BACKEND_URL=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" \
+              --request GET https://api.memstash.io/values/backendurl)
+            echo "${BACKEND_URL}" >> .circleci/ansible/inventory.txt
+            cat .circleci/ansible/inventory.txt
+      - run: yum -y install tar gzip
+      - persist_to_workspace:
+          root: .circleci/ansible
+          paths:
+            - inventory.txt
+      # This command has a when: on_fail
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"          
             
-
- 
-
-
             
  
 workflows:
-  deploy_and_notify:
-    jobs:
-      - deploy:
-          context: slack-secrets
+ 
   default:
     jobs:
       - build-frontend
@@ -149,5 +239,8 @@ workflows:
       - scan-backend:
           requires: [build-backend]
       - deploy-infrastructure:
-          requires: [build-frontend,build-backend]
+          requires: [test-frontend,test-backend,scan-frontend,scan-backend]
+          filters:
+            branches:
+            only: [master]
 
