@@ -112,6 +112,20 @@ jobs:
           channel: '#default,#alx-devops'
           event: fail
           template: basic_fail_1
+
+  deploy-infrastructure:
+    docker:
+      - image: amazon/aws-cli
+      # Docker image here
+    steps:
+      - checkout
+      - run:
+          name: Deploy Infrastructure
+          command: |
+            aws install tar,gzip
+             
+            
+
  
 
 
@@ -134,4 +148,6 @@ workflows:
           requires: [build-frontend]
       - scan-backend:
           requires: [build-backend]
+      - deploy-infrastructure:
+          requires: [build-frontend,build-backend]
 
