@@ -219,7 +219,43 @@ jobs:
             - inventory.txt
       # This command has a when: on_fail
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"          
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"  
+
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+      # Docker image here that supports Ansible
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ['5f:7b:d4:d7:d8:88:61:0b:21:eb:b9:cc:cd:ed:53:c1'] #['1d:15:4f:92:da:d5:c7:61:58:1e:58:11:38:b5:53:b4:fa:5e:08:b0'] # ["5f:7b:d4:d7:d8:88:61:0b:21:eb:b9:cc:cd:ed:53:c1"]
+      # attach workspace
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible # install the dependencies needed for your playbook
+            cat .circleci/ansible/inventory.txt
+      - run:
+          name: Configure server
+          command: |
+            echo ENVIRONMENT=production > "backend/.env"
+            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            echo NODE_ENV=production >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            ansible-playbook \
+              -i .circleci/ansible/inventory.txt \
+              .circleci/ansible/configure-server.yml        
             
             
  
@@ -242,4 +278,6 @@ workflows:
           filters:
             branches:
               only: [master]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
 
