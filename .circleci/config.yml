@@ -56,8 +56,8 @@ jobs:
             npm install
             npm run build
       - save_cache:
-        paths: [frontend/node_modules]
-        key: frontend-build 
+          paths: [frontend/node_modules]
+          key: frontend-build 
       - slack/notify:
           event: fail
           template: basic_fail_1
@@ -104,8 +104,8 @@ jobs:
             npm install
             npm run test
       - slack/notify:
-        event: fail
-        template: basic_fail_1   
+          event: fail
+          template: basic_fail_1   
                  
   test-backend:
     docker:
@@ -120,8 +120,8 @@ jobs:
             npm install
             npm run test
       - slack/notify:
-        event: fail
-        template: basic_fail_1   
+          event: fail
+          template: basic_fail_1   
 
   scan-frontend:
     docker:
@@ -137,8 +137,8 @@ jobs:
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
       - slack/notify:
-        event: fail
-        template: basic_fail_1   
+          event: fail
+          template: basic_fail_1   
 
   scan-backend:
     docker:
@@ -155,8 +155,8 @@ jobs:
             npm audit --audit-level=critical
 
       - slack/notify:
-        event: fail
-        template: basic_fail_1   
+          event: fail
+          template: basic_fail_1   
             
 
  
@@ -242,5 +242,5 @@ workflows:
           requires: [test-frontend,test-backend,scan-frontend,scan-backend]
           filters:
             branches:
-            only: [master]
+              only: [master]
 
