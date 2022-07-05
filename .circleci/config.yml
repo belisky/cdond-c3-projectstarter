@@ -2,6 +2,7 @@ version: 2.1
 orbs:
   node: circleci/node@5.0.2
   slack: circleci/slack@4.10.1
+  aws-cli: circleci/aws-cli@1.3.0
 
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
@@ -276,12 +277,12 @@ jobs:
             migration_succesful=$(cat migration.log | grep -c "has been executed successfully")
             if [ $migration_succesful > 0 ]; then exit 0; else exit 1; fi;
       - run:
-          name: Send migration results to memstash
+          name: Send migration results to kvdb
           command: |
-            curl -H "Content-Type: text/plain" \
-              -H "token: ${CIRCLE_WORKFLOW_ID}"  \
-              --request PUT --data "1" \
-              https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            then
+              curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
+            fi
       - revert-migrations
       - destroy-environment
 
