@@ -182,7 +182,7 @@ jobs:
             echo $BACKEND_URL
             curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" \
               --request PUT --data "${BACKEND_URL}" \
-              https://api.memstash.io/values/backendurl
+              https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl
 
       - run:
           name: Ensure front-end infrastructure exist
@@ -196,7 +196,7 @@ jobs:
           name: Add back-end ip to ansible inventory
           command: |
             export BACKEND_URL=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" \
-              --request GET https://api.memstash.io/values/backendurl)
+              --request GET https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl)
             echo "${BACKEND_URL}" >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
       - run: yum -y install tar gzip
