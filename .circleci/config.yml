@@ -226,7 +226,7 @@ jobs:
           name: Install dependencies
           # install the dependencies needed for your playbook
           command: |   
-            apk add --update ansible aws-cli 
+            apk add --update ansible 
             cat .circleci/ansible/inventory.txt
       - run:
           name: Configure server
