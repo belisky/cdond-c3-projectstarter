@@ -165,6 +165,7 @@ jobs:
       # Docker image here
     steps:
       - checkout
+      - aws-cli/setup
       - run:
           name: Ensure backend infrastructure exist
           command: |
@@ -220,11 +221,12 @@ jobs:
           fingerprints: ['5f:7b:d4:d7:d8:88:61:0b:21:eb:b9:cc:cd:ed:53:c1'] #['1d:15:4f:92:da:d5:c7:61:58:1e:58:11:38:b5:53:b4:fa:5e:08:b0'] # ["5f:7b:d4:d7:d8:88:61:0b:21:eb:b9:cc:cd:ed:53:c1"]
       # attach workspace
       - attach_workspace:
-          at: ~/
+          at: /tmp/.circleci/ansible
       - run:
           name: Install dependencies
-          command: |
-            apk add --update ansible # install the dependencies needed for your playbook
+          # install the dependencies needed for your playbook
+          command: |   
+            apk add --update ansible aws-cli 
             cat .circleci/ansible/inventory.txt
       - run:
           name: Configure server
@@ -241,7 +243,7 @@ jobs:
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
             ansible-playbook \
-              -i .circleci/ansible/inventory.txt \
+              -i /tmp/.circleci/ansible/inventory.txt \
               .circleci/ansible/configure-server.yml  
 
   run-migrations:
@@ -255,7 +257,7 @@ jobs:
       - restore_cache:
           keys: ["backend-build"]
       - run:
-          name: Run migrations
+          name: prepare environment for backend build
           command: |
             echo ENVIRONMENT=production > "backend/.env"
             echo TYPEORM_CONNECTION=postgres >> "backend/.env"
@@ -268,9 +270,18 @@ jobs:
             echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+
+      - run:
+          name: Install dependencies 
+          command: |
+            sudo apt update
+            sudo apt install -y awscli
+      - run:
+          name: Run migrations     
             cd backend
+            cat .env
             sudo npm install
-            npm audit fix --audit-level=critical --force
+            npm audit fix --audit-level=critical 
             npm run build
             sudo npm run migrations > migration.log
             cat migration.log
@@ -283,6 +294,13 @@ jobs:
             then
               curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
             fi
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - backend
+
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
       # - revert-migrations
       # - destroy-environment
 
