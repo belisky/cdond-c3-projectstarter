@@ -211,7 +211,7 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: python:3.10-alpine3.12
       # Docker image here that supports Ansible
     steps:
       # Checkout code from git
@@ -226,7 +226,7 @@ jobs:
           name: Install dependencies
           # install the dependencies needed for your playbook
           command: |   
-            apk add --update ansible aws-cli 
+            apk add --update ansible 
             cat .circleci/ansible/inventory.txt
       - run:
           name: Configure server
