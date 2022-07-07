@@ -257,7 +257,7 @@ jobs:
       - restore_cache:
           keys: ["backend-build"]
       - run:
-          name: prepare environment for backend build
+          name: Run migrations
           command: |
             echo ENVIRONMENT=production > "backend/.env"
             echo TYPEORM_CONNECTION=postgres >> "backend/.env"
@@ -269,15 +269,8 @@ jobs:
             echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
             echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
-
-      - run:
-          name: Install dependencies 
-          command: |
-            sudo apt update
-            sudo apt install -y awscli
-      - run:
-          name: Run migrations     
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"      
+           
             cd backend
             cat .env
             sudo npm install
