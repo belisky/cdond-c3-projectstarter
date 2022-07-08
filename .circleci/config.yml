@@ -254,8 +254,7 @@ jobs:
       # Checkout code from git
       - checkout
       - aws-cli/setup
-      - restore_cache:
-          keys: ["backend-build"]
+      
       - run:
           name: Run migrations
           command: |
@@ -271,16 +270,6 @@ jobs:
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"    
            
- 
-
-      - run:
-          name: Install dependencies 
-          command: |
-            sudo apt update
-            sudo apt install -y awscli
-      - run:
-          name: Run migrations 
-          command: |    
             cd backend
             cat .env
             sudo npm install
@@ -290,22 +279,23 @@ jobs:
             cat migration.log
             migration_succesful=$(cat migration.log | grep -c "has been executed successfully")
             if [ $migration_succesful > 0 ]; then exit 0; else exit 1; fi;
+ 
+ 
+       
       - run:
           name: Send migration results to kvdb
-          command: |
-            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
-            then
-              curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
-            fi
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - backend
+          command: |             
+            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
+            
+      # - persist_to_workspace:
+      #     root: ~/project
+      #     paths:
+      #       - backend
 
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
-      # - revert-migrations
-      # - destroy-environment
+      # - destroy-environment:
+      #     workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      # # - revert-migrations
+      # # - destroy-environment
 
 
      # Here's where you will add some code to rollback on failure
