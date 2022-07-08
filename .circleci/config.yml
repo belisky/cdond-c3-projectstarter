@@ -284,9 +284,9 @@ jobs:
  
  
        
-      - run:
-          name: Send migration results to kvdb
-          command: |             
+      # - run:
+      #     name: Send migration results to kvdb
+      #     command: |             
             
       # - persist_to_workspace:
       #     root: ~/project
