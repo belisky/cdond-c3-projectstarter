@@ -275,7 +275,8 @@ jobs:
             sudo npm cache clean --force
             rm -rf node_modules
             sudo npm install
-            npm audit fix --audit-level=critical --force
+            sudo npm install typescript
+            npm audit fix --audit-level=critical 
             npm run build
             sudo npm run migrations > migration-log.txt
             cat migration-log.txt
