@@ -276,8 +276,8 @@ jobs:
             npm run build
             sudo npm run migrations > migration-log.txt
             cat migration-log.txt
-            migration_successful=$(grep -o -i "has been executed successfully" migration-log.txt | wc -l)
-            if [ $migration_succesful > 0 ]; then exit 0; else exit 1; fi;                      
+        # migration_successful=$(grep -o -i "has been executed successfully" migration-log.txt | wc -l)
+        # if [ $migration_succesful > 0 ]; then exit 0; else exit 1; fi;                      
                         
        
       - run:
