@@ -276,14 +276,15 @@ jobs:
             npm run build
             sudo npm run migrations > migration-log.txt
             cat migration-log.txt
-            migration_successful=$(cat migration-log.txt | grep -c "has been executed successfully")
+            migration_successful=$(grep -o -i "has been executed successfully" migration-log.txt | wc -l)
             if [ $migration_succesful > 0 ]; then exit 0; else exit 1; fi;                      
                         
        
       - run:
           name: Send migration results to kvdb
-          command: |             
-              curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
+          command: |
+
+            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
             
       # - persist_to_workspace:
       #     root: ~/project
