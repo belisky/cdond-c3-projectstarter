@@ -17,7 +17,7 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |            
-            aws s3 rm --recursive s3://udapeople-by-nobel-1           
+# aws s3 rm --recursive s3://udapeople-by-nobel-1           
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
             aws cloudformation delete-stack --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -315,7 +315,7 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export API_URL=$(curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl)
+            export API_URL=$(curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl)
             export API_URL="http://${API_URL}:3030"
             echo "${API_URL}" > .circleci/api_url.txt
       - run:
@@ -375,14 +375,23 @@ jobs:
             sudo apt install -y python3 ansible
       - run:
           name: Get backend url
-          command: |
+          command: |          
             curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl > backend-url.txt
       - run:
           name: Backend smoke test.
           command: |
-            url=$(cat backend-url.txt)
-            url="http://${url}:3030/api/status"
-            curl $url
+            url=$(cat /backend-url.txt)     
+            echo "${url}"
+            export API_URL="http://${url}:3030"
+            echo "${API_URL}"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+                return 0
+            else
+                return 1
+            fi
+
+
       - run:
           name: Frontend smoke test.
           command: |
