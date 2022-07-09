@@ -32,7 +32,7 @@ commands:
           when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            export SUCCESS=$(curl -H --request GET https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/migration_${CIRCLE_WORKFLOW_ID})
+            export SUCCESS=$(curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7})
             if(( $SUCCESS==1 )); 
             then
               cd ~/project/backend
@@ -177,13 +177,12 @@ jobs:
               --tags project=udapeople
 
             export BACKEND_URL=$(aws cloudformation describe-stacks \
-              --stack-name backend-"${CIRCLE_WORKFLOW_ID}" \
+              --stack-name backend-"${CIRCLE_WORKFLOW_ID:0:7}" \
               --query "Stacks[0].Outputs[?OutputKey=='BackendURL'].OutputValue" \
               --no-paginate --output text)
             echo $BACKEND_URL
-            curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" \
-              --request PUT --data "${BACKEND_URL}" \
-              https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl
+            echo "${BACKEND_URL}" >> .circleci/ansible/inventory.txt
+            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_URL}"
 
       - run:
           name: Ensure front-end infrastructure exist
@@ -191,13 +190,12 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople-frontend \
-              --stack-name frontend-"${CIRCLE_WORKFLOW_ID}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"
+              --stack-name frontend-"${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            export BACKEND_URL=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" \
-              --request GET https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl)
+            export BACKEND_URL=$(curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl)
             echo "${BACKEND_URL}" >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
       - run: yum -y install tar gzip
@@ -207,7 +205,7 @@ jobs:
             - inventory.txt
       # This command has a when: on_fail
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"  
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"  
 
   configure-infrastructure:
     docker:
@@ -286,10 +284,10 @@ jobs:
 
             curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
             
-      # - persist_to_workspace:
-      #     root: ~/project
-      #     paths:
-      #       - backend
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - backend
 
       # - destroy-environment:
       #     workflow_id: "${CIRCLE_WORKFLOW_ID}"
@@ -301,40 +299,72 @@ jobs:
      # Nothing really.
 
   deploy-frontend:
-      docker:
-        - image: circleci/node:13.8.0
-      steps:
-        - checkout
-        - attach_workspace:
-            at: ~/
-        - run:
-            name: Install dependencies
-            command: |
-              cd frontend
-              sudo npm install webpack-dev-server -g
-              sudo npm install
-        - run:
-            name: Get backend url
-            command: |
-              export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)
-              export API_URL="http://${BACKEND_IP}:3030"
-              echo ENVIRONMENT=production > "frontend/.env"
-              echo NODE_ENV=production >> "frontend/.env"
-              echo API_URL=$API_URL >> "frontend/.env"
-              echo $API_URL
-        - run:
-            name: Build frontend
-            command: |
-              cd frontend
-              ls -la
-              cat .env
-              npm run build
-        - aws-cli/setup
-        - run:
-            name: Deploy frontend objects
-            command: |
-              aws s3 cp --recursive frontend/dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}"
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            cd frontend
+            sudo npm install webpack-dev-server -g
+            sudo npm install
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo ENVIRONMENT=production > "frontend/.env"
+            echo NODE_ENV=production >> "frontend/.env"
+            echo API_URL=$API_URL >> "frontend/.env"
+            echo $API_URL
+      - run:
+          name: Build frontend
+          command: |
+            cd frontend
+            ls -la
+            cat .env
+            npm run build
+      - aws-cli/setup
+      - run:
+          name: Deploy frontend objects
+          command: |
+            aws s3 cp --recursive frontend/dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}"
 
+  deploy-backend:
+    docker:
+      - image: python:3.9.1-alpine3.12
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["5f:7b:d4:d7:d8:88:61:0b:21:eb:b9:cc:cd:ed:53:c1"]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible openssh-client tar gzip
+      - restore_cache:
+          keys: ["backend-dist"]  # -<< pipeline.id >>
+      - run:
+          name: Deploy backend
+          command: |
+            cd /home
+            tar czf backend.tar.gz -P /home/circleci/project/backend/dist
+      - run:
+          name: Deploy backend 2
+          command: |
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            ansible-playbook \
+              -i .circleci/ansible/inventory.txt \
+              .circleci/ansible/deploy-backend.yml
+      - run:
+          name: Install AWS CLI for rollback
+          when: on_fail
+          command: |
+            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
         
               
             
@@ -342,25 +372,27 @@ jobs:
 workflows: 
   default:
     jobs:
-      # - build-frontend
-      # - build-backend
-      # - test-frontend:
-      #     requires: [build-frontend]
-      # - test-backend:
-      #     requires: [build-backend]
-      # - scan-frontend:
-      #     requires: [build-frontend]
-      # - scan-backend:
-      #     requires: [build-backend]
-      # - deploy-infrastructure:
-      #     requires: [test-frontend,test-backend,scan-frontend,scan-backend]
-      #     filters:
-      #       branches:
-      #         only: [master]
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
+      - build-frontend
+      - build-backend
+      - test-frontend:
+          requires: [build-frontend]
+      - test-backend:
+          requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
+      - scan-backend:
+          requires: [build-backend]
+      - deploy-infrastructure:
+          requires: [test-frontend,test-backend,scan-frontend,scan-backend]
+          filters:
+            branches:
+              only: [master]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
        - deploy-frontend:
-          # requires: [run-migrations]
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
 
