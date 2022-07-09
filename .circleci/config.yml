@@ -181,7 +181,7 @@ jobs:
               --no-paginate --output text)
             echo $BACKEND_URL
             echo "${BACKEND_URL}" >> .circleci/ansible/inventory.txt
-            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_URL}"
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_URL}"
 
       - run:
           name: Ensure front-end infrastructure exist
@@ -281,7 +281,7 @@ jobs:
           name: Send migration results to kvdb
           command: |
 
-            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_$\{CIRCLE_WORKFLOW_ID:0:7\}  -d '1' 
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_$\{CIRCLE_WORKFLOW_ID:0:7\}  -d '1' 
             
       - persist_to_workspace:
           root: ~/project
@@ -415,7 +415,7 @@ jobs:
             echo "${OldWorkflowID}"
             echo "${STACKS[@]}"
             # save oldworkflowid for the cleanup phase
-            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid -d "${OldWorkflowID}"
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid -d "${OldWorkflowID}"
             # promote
             aws cloudformation update-stack \
               --use-previous-template \
