@@ -31,7 +31,7 @@ commands:
           when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            export SUCCESS=$(curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            export SUCCESS=$(curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_$\{CIRCLE_WORKFLOW_ID:0:7\})
             if(( $SUCCESS==1 )); 
             then
               cd ~/project/backend
@@ -181,7 +181,7 @@ jobs:
               --no-paginate --output text)
             echo $BACKEND_URL
             echo "${BACKEND_URL}" >> .circleci/ansible/inventory.txt
-            curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_URL}"
+            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_URL}"
 
       - run:
           name: Ensure front-end infrastructure exist
@@ -194,7 +194,7 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            export BACKEND_URL=$(curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl)
+            export BACKEND_URL=$(curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl)
             echo "${BACKEND_URL}" >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
       - run: yum -y install tar gzip
@@ -281,7 +281,7 @@ jobs:
           name: Send migration results to kvdb
           command: |
 
-            curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
+            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_$\{CIRCLE_WORKFLOW_ID:0:7\}  -d '1' 
             
       - persist_to_workspace:
           root: ~/project
@@ -314,7 +314,7 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export API_URL=$(curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl)
+            export API_URL=$(curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl)
             export API_URL="http://${API_URL}:3030"
             echo "${API_URL}" > .circleci/api_url.txt
       - run:
@@ -375,7 +375,7 @@ jobs:
       - run:
           name: Get backend url
           command: |          
-            curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl > backend-url.txt
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl > backend-url.txt
       - run:
           name: Backend smoke test.
           command: |
@@ -415,7 +415,7 @@ jobs:
             echo "${OldWorkflowID}"
             echo "${STACKS[@]}"
             # save oldworkflowid for the cleanup phase
-            curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid -d "${OldWorkflowID}"
+            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid -d "${OldWorkflowID}"
             # promote
             aws cloudformation update-stack \
               --use-previous-template \
@@ -437,7 +437,7 @@ jobs:
       - run:
           name: Remove old stacks and files
           command: |
-            export OldWorkflowID=$(curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid)
+            export OldWorkflowID=$(curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid)
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
               aws s3 rm s3://udapeople-"${OldWorkflowID}" --recursive
