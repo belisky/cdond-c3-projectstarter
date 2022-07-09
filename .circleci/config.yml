@@ -360,6 +360,86 @@ jobs:
             ansible-playbook -i /tmp/artifacts/inventory.txt deploy-backend.yml
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
+
+  smoke-test:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt update
+            sudo apt install -y awscli
+            sudo apt install -y python3 ansible
+      - run:
+          name: Get backend url
+          command: |
+            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl > backend-url.txt
+      - run:
+          name: Backend smoke test.
+          command: |
+            url=$(cat backend-url.txt)
+            url="http://${url}:3030/api/status"
+            curl $url
+      - run:
+          name: Frontend smoke test.
+          command: |
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com"
+            curl -s "${URL}"
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
+
+  cloudfront-update:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            yum install -y curl
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            export OldWorkflowID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+            echo "${OldWorkflowID}"
+            echo "${STACKS[@]}"
+            # save oldworkflowid for the cleanup phase
+            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid -d "${OldWorkflowID}"
+            # promote
+            aws cloudformation update-stack \
+              --use-previous-template \
+              --stack-name cloudfront-${OldWorkflowID} \
+              --parameters ParameterKey=WorkflowID,ParameterValue=$CIRCLE_WORKFLOW_ID,UsePreviousValue=false
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
+
+
+  cleanup:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Remove old stacks and files
+          command: |
+            export OldWorkflowID=$(curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid)
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              aws s3 rm s3://udapeople-"${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name frontend-"${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name backend-"${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name cloudfront-"${OldWorkflowID}"
+            fi
               
             
  
@@ -389,4 +469,11 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
+      - cloudfront-update:
+          requires: [smoke-test]
+      - cleanup:
+          requires: [cloudfront-update]
+
 
