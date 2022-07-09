@@ -249,7 +249,7 @@ jobs:
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
-      - image: cimg/node
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
@@ -284,7 +284,7 @@ jobs:
           name: Send migration results to kvdb
           command: |
 
-            curl https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
+            curl -k https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
             
       # - persist_to_workspace:
       #     root: ~/project
