@@ -302,7 +302,7 @@ jobs:
             cat migration-log.txt
 
             if cat migration-log.txt | grep "has been executed successfully"; then
-              return 0
+              exit 0
             fi
         # migration_successful=$(grep -o -i "has been executed successfully" migration-log.txt | wc -l)
         # if [ $migration_succesful > 0 ]; then exit 0; else exit 1; fi;                      
