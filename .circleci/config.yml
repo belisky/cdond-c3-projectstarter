@@ -167,7 +167,7 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/base:2020.01
       # Docker image here
     steps:
       - checkout
@@ -182,6 +182,9 @@ jobs:
               --stack-name backend-"${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" 
 
+      - run:
+          name: Ensure frontend infrastructure exist
+          command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \               
               --tags project=udapeople \
