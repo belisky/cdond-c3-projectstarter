@@ -207,7 +207,7 @@ jobs:
               --no-paginate --output text)
 
             echo $BACKEND_URL
-            curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d "${BACKEND_IP}"
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d $BACKEND_IP
     
       - persist_to_workspace:
           root: .circleci/ansible
@@ -347,7 +347,7 @@ jobs:
           name: Get backend url
           command: |
             export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)
-            curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_IP}"
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d $BACKEND_IP
             export API_URL="http://${BACKEND_IP}:3030"
             echo ENVIRONMENT=production > frontend/.env
             echo NODE_ENV=production >> frontend/.env
@@ -415,8 +415,8 @@ jobs:
       - run:
           name: Get backend url
           command: |          
-            curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls > backend-url.txt
-            curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl > backend-url1.txt
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls > backend-url.txt
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl > backend-url1.txt
       - run:
           name: Backend smoke test.
           command: |
@@ -472,7 +472,7 @@ jobs:
             echo "${OldWorkflowID}"
             echo "${STACKS[@]}"
             # save oldworkflowid for the cleanup phase
-            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid -d "${OldWorkflowID}"
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid -d $OldWorkflowID
             # promote
             aws cloudformation update-stack \
               --use-previous-template \
