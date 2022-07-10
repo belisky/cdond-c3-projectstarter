@@ -178,7 +178,7 @@ jobs:
             yum install -y tar gzip
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --stack-name udapeople-backend-"${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
               --tags project=udapeople
             
@@ -187,7 +187,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \               
-              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --stack-name udapeople-frontend-"${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople
  
@@ -199,6 +199,15 @@ jobs:
               --filters "Name=tag:project,Values=udapeople" \
               --output text >> .circleci/ansible/inventory.txt
               cat .circleci/ansible/inventory.txt
+
+
+            export BACKEND_URL=$(aws cloudformation describe-stacks \
+              --stack-name udapeople-backend-"${CIRCLE_WORKFLOW_ID}" \
+              --query "Stacks[0].Outputs[?OutputKey=='BackendURL'].OutputValue" \
+              --no-paginate --output text)
+
+            echo $BACKEND_URL
+            curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d "${BACKEND_IP}"
 
       - persist_to_workspace:
           root: .circleci/ansible
