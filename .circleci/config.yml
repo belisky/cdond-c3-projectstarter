@@ -202,12 +202,12 @@ jobs:
 
 
             export BACKEND_URL=$(aws cloudformation describe-stacks \
-              --stack-name backend-"${CIRCLE_WORKFLOW_ID}" \
+              --stack-name backend-"${CIRCLE_WORKFLOW_ID:0:7}" \
               --query "Stacks[0].Outputs[?OutputKey=='BackendURL'].OutputValue" \
               --no-paginate --output text)
 
             echo $BACKEND_URL
-            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d $BACKEND_IP
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d $BACKEND_URL
     
       - persist_to_workspace:
           root: .circleci/ansible
