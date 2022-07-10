@@ -273,7 +273,7 @@ jobs:
           keys: [backend-build]
       
       - run:
-          name: Run migrations
+          name: prepare environment for backend build
           command: |
             echo ENVIRONMENT=production > "backend/.env"
             echo TYPEORM_CONNECTION=postgres >> "backend/.env"
@@ -285,7 +285,14 @@ jobs:
             echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
             echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"    
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"  
+
+            sudo apt update
+            sudo apt install -y awscli
+
+      - run:
+          name: Install dependencies
+          command: |           
            
             cd backend
             cat .env             
@@ -293,6 +300,10 @@ jobs:
             npm run build
             sudo npm run migrations > migration-log.txt
             cat migration-log.txt
+
+            if cat migration-log.txt | grep "has been executed successfully"; then
+              return 0
+            fi
         # migration_successful=$(grep -o -i "has been executed successfully" migration-log.txt | wc -l)
         # if [ $migration_succesful > 0 ]; then exit 0; else exit 1; fi;                      
                         
@@ -302,10 +313,14 @@ jobs:
           command: |
 
             curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_$\{CIRCLE_WORKFLOW_ID:0:7\}  -d '1' 
-            
+
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - backend  
 
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations
       # # - destroy-environment
 
@@ -315,7 +330,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: amazon/aws-cli
     steps:
       - checkout
       - restore_cache:
@@ -324,28 +339,29 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            cd frontend
-            sudo npm install webpack-dev-server -g
-            sudo npm install 
+            yum install -y curl tar sudo
+            curl -sL https://rpm.nodesource.com/setup_13.x | sudo bash -
+            yum install -y nodejs
+            node --version
       - run:
           name: Get backend url
           command: |
             export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)
             curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_IP}"
             export API_URL="http://${BACKEND_IP}:3030"
-            echo ENVIRONMENT=production > "frontend/.env"
-            echo NODE_ENV=production >> "frontend/.env"
-            echo API_URL=$API_URL >> "frontend/.env"
+            echo ENVIRONMENT=production > frontend/.env
+            echo NODE_ENV=production >> frontend/.env
+            echo API_URL=$API_URL >> frontend/.env
             echo $API_URL
             
       - run:
           name: Build frontend
           command: |
             cd frontend
-            ls -la
-            cat .env
+            npm i      
+             
             npm run build
-      - aws-cli/setup
+  
       - run:
           name: Deploy frontend objects
           command: |
@@ -372,7 +388,7 @@ jobs:
       - run:
           name: compress backend
           command: |
-            tar -C /tmp/artifacts/backend -czvf /project/artifact.tar.gz 
+            tar -C /tmp/artifacts/backend -czvf artifact.tar.gz .
       - run:
           name: Deploy backend
           command: |
@@ -380,14 +396,10 @@ jobs:
             export ANSIBLE_HOST_KEY_CHECKING=False
             ansible-playbook -i /tmp/artifacts/inventory.txt deploy-backend.yml
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations
 
-
-
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-      - revert-migrations
+ 
 
 
 

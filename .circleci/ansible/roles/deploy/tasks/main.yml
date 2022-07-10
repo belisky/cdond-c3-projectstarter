@@ -2,18 +2,16 @@
 - name: copy dist backend folder to ec2 server
   become: true
   copy:
-    src: /project/artifact.tar.gz
+    src: ~/project/artifact.tar.gz
     dest: /home/ubuntu/artifact.tar.gz
 
-- name: prep
+- name: prepare binaries
   become: true
   shell: |
-    cd /home/ubuntu/
-    tar xvzf artifact.tar.gz 
-    mv home/circleci/project/backend .
-    cd backend
-    sudo npm install -g npm@latest
-    sudo npm install -g webpack-dev-server
-    sudo npm install
-    sudo npm run build
-    sudo pm2 start npm --name backend -- start
+    cd /home/ubuntu
+    tar xvzf artifact.tar.gz -C .
+- name: start server
+  become: true
+  shell: |
+    cd /home/ubuntu
+    pm2 start npm --name backend -- start
