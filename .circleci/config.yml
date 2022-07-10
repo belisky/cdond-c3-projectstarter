@@ -428,15 +428,17 @@ jobs:
             url1="http://${url1}:3030/api/status" 
             echo $url            
             echo $url1            
-            curl $url
-            curl $url1
             cat /.circleci/ansible/inventory.txt
             BACKEND_IP1=$(sed -n 2p /.circleci/ansible/inventory.txt)
             cat $BACKEND_IP
             cat $BACKEND_IP1
             cat $BACKEND_URL
             curl "http://${BACKEND_IP}:3030"
+            curl "http://${BACKEND_IP}:3030/api/status"
             curl "http://${BACKEND_IP1}:3030"
+            curl "http://${BACKEND_IP1}:3030/api/status"
+            curl $url1
+            curl $url
 
         
       - run:
