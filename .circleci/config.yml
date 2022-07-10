@@ -77,9 +77,9 @@ jobs:
           name: Back-end build
           command: |
             cd backend
+            cat .env
             npm install
-            npm run build
-        
+            npm run build        
             
       - save_cache:
           paths: [backend/node_modules]
@@ -97,6 +97,8 @@ jobs:
       # Docker image here
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]
       - run:
           name: Test Front-end
           command: |
@@ -113,6 +115,8 @@ jobs:
       # Docker image here
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Test Back-end
           command: |
@@ -129,13 +133,15 @@ jobs:
       # Docker image here
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]
       - run:
           name: Scan Front-end
           command: |
             cd frontend
             npm install
             npm audit fix --audit-level=critical --force
-            npm audit --audit-level=critical
+       
       - slack/notify:
           event: fail
           template: basic_fail_1   
@@ -146,6 +152,8 @@ jobs:
       # Docker image here
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Scan Back-end
           command: |
@@ -179,10 +187,10 @@ jobs:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
-              --template-file .circleci/files/frontend.yml \
-              --tags project=udapeople-frontend \
-              --stack-name frontend-"${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+              --template-file .circleci/files/frontend.yml \               
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople
  
       - run:
           name: Add back-end ip to ansible inventory
@@ -194,9 +202,9 @@ jobs:
               cat .circleci/ansible/inventory.txt
 
       - persist_to_workspace:
-          root: ~/
+          root: .circleci/ansible
           paths:
-            - project/.circleci/ansible/inventory.txt 
+            - inventory.txt 
   
 
   configure-infrastructure:
@@ -211,13 +219,13 @@ jobs:
           fingerprints: ['32:d6:78:83:46:dc:d6:47:af:a8:45:6b:b5:d1:f8:03'] #['1d:15:4f:92:da:d5:c7:61:58:1e:58:11:38:b5:53:b4:fa:5e:08:b0'] # ["5f:7b:d4:d7:d8:88:61:0b:21:eb:b9:cc:cd:ed:53:c1"]
       # attach workspace
       - attach_workspace:
-          at: ~/
+          at: /tmp/.circleci/ansible
       - run:
           name: Install dependencies
           # install the dependencies needed for your playbook
           command: |   
-            apk add --update ansible 
-            cat .circleci/ansible/inventory.txt
+            apk add --update ansible aws-cli
+     
       - run:
           name: Configure server
           command: |
@@ -286,13 +294,46 @@ jobs:
      # Here's where you will add some code to rollback on failure
      # Nothing really.
 
+
+  deploy-backend:
+    docker:
+      - image: python:3.9.1-alpine3.12
+    steps:
+      - checkout
+      - add_ssh_keys:        
+          fingerprints: ['32:d6:78:83:46:dc:d6:47:af:a8:45:6b:b5:d1:f8:03'] #['1d:15:4f:92:da:d5:c7:61:58:1e:58:11:38:b5:53:b4:fa:5e:08:b0'] # ["5f:7b:d4:d7:d8:88:61:0b:21:eb:b9:cc:cd:ed:53:c1"]
+      - restore_cache:
+          keys: [backend-build]
+      - attach_workspace:
+          at: /tmp/artifacts
+      - run:
+          name: Install dependencies
+          command: |
+            apk update
+            apk add --update ansible aws-cli openssh-client tar
+      - run:
+          name: compress backend
+          command: |
+            tar -C /tmp/artifacts/backend -czvf artifact.tar.gz .
+      - run:
+          name: Deploy backend
+          command: |
+            cd .circleci/ansible
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            ansible-playbook -i /tmp/artifacts/inventory.txt deploy-backend.yml
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations
+
+
   deploy-frontend:
     docker:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - attach_workspace:
-          at: ~/
+      - restore_cache:
+          keys: [frontend-build]
+          
       - run:
           name: Install dependencies
           command: |
@@ -329,35 +370,7 @@ jobs:
       - revert-migrations
 
 
-  deploy-backend:
-    docker:
-      - image: python:3.9.1-alpine3.12
-    steps:
-      - checkout
-      - add_ssh_keys:        
-          fingerprints: ['32:d6:78:83:46:dc:d6:47:af:a8:45:6b:b5:d1:f8:03'] #['1d:15:4f:92:da:d5:c7:61:58:1e:58:11:38:b5:53:b4:fa:5e:08:b0'] # ["5f:7b:d4:d7:d8:88:61:0b:21:eb:b9:cc:cd:ed:53:c1"]
-      - restore_cache:
-          keys: [backend-build]
-      - attach_workspace:
-          at: /tmp/artifacts
-      - run:
-          name: Install dependencies
-          command: |
-            apk update
-            apk add --update ansible aws-cli openssh-client tar
-      - run:
-          name: compress backend
-          command: |
-            tar -C /tmp/artifacts/backend -czvf artifact.tar.gz .
-      - run:
-          name: Deploy backend
-          command: |
-            cd .circleci/ansible
-            export ANSIBLE_HOST_KEY_CHECKING=False
-            ansible-playbook -i /tmp/artifacts/inventory.txt deploy-backend.yml
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
-      - revert-migrations
+
 
   smoke-test:
     docker:
