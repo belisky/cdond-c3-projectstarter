@@ -276,11 +276,10 @@ jobs:
 
             curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/migration_$\{CIRCLE_WORKFLOW_ID:0:7\}  -d '1' 
             
-   
 
-      # - destroy-environment:
-      #     workflow_id: "${CIRCLE_WORKFLOW_ID}"
-      # # - revert-migrations
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations
       # # - destroy-environment
 
 
@@ -327,6 +326,7 @@ jobs:
   
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations
 
 
   deploy-backend:
@@ -336,32 +336,28 @@ jobs:
       - checkout
       - add_ssh_keys:        
           fingerprints: ['32:d6:78:83:46:dc:d6:47:af:a8:45:6b:b5:d1:f8:03'] #['1d:15:4f:92:da:d5:c7:61:58:1e:58:11:38:b5:53:b4:fa:5e:08:b0'] # ["5f:7b:d4:d7:d8:88:61:0b:21:eb:b9:cc:cd:ed:53:c1"]
+      - restore_cache:
+          keys: [backend-build]
       - attach_workspace:
-          at: ~/ 
+          at: /tmp/artifacts
       - run:
           name: Install dependencies
-          command: |             
-            apk add --update ansible aws-cli openssh-client tar gzip
-      - restore_cache:
-          keys: ["backend-dist"]
+          command: |
+            apk update
+            apk add --update ansible aws-cli openssh-client tar
+      - run:
+          name: compress backend
+          command: |
+            tar -C /tmp/artifacts/backend -czvf artifact.tar.gz .
       - run:
           name: Deploy backend
           command: |
-            cd /home
-            tar czf backend.tar.gz -P /home/circleci/project/backend/dist 
-      - run:
-          name: Deploy backend2
-          command: |        
+            cd .circleci/ansible
             export ANSIBLE_HOST_KEY_CHECKING=False
-            ansible-playbook \
-              -i .circleci/ansible/inventory.txt \
-              .circleci/ansible/deploy-backend.yml
-      - run:
-          name: Install AWS CLI for rollback
-          when: on_fail
-          command: |
-            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
-   
+            ansible-playbook -i /tmp/artifacts/inventory.txt deploy-backend.yml
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations
 
   smoke-test:
     docker:
