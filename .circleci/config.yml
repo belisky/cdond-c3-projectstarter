@@ -167,7 +167,7 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: cimg/base:2020.01
+      - image: amazon/aws-cli
       # Docker image here
     steps:
       - checkout
@@ -313,6 +313,45 @@ jobs:
      # Here's where you will add some code to rollback on failure
      # Nothing really.
 
+  deploy-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]        
+          
+      - run:
+          name: Install dependencies
+          command: |
+            cd frontend
+            sudo npm install webpack-dev-server -g
+            sudo npm install 
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_IP}"
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo ENVIRONMENT=production > "frontend/.env"
+            echo NODE_ENV=production >> "frontend/.env"
+            echo API_URL=$API_URL >> "frontend/.env"
+            echo $API_URL
+            
+      - run:
+          name: Build frontend
+          command: |
+            cd frontend
+            ls -la
+            cat .env
+            npm run build
+      - aws-cli/setup
+      - run:
+          name: Deploy frontend objects
+          command: |
+            aws s3 cp frontend/dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+  
+
 
   deploy-backend:
     docker:
@@ -345,45 +384,7 @@ jobs:
       - revert-migrations
 
 
-  deploy-frontend:
-    docker:
-      - image: circleci/node:13.8.0
-    steps:
-      - checkout
-      - restore_cache:
-          keys: [frontend-build]
-          
-      - run:
-          name: Install dependencies
-          command: |
-            cd frontend
-            sudo npm install webpack-dev-server -g
-            sudo npm install
- 
-      - run:
-          name: Get backend url
-          command: |
-            export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)
-            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_IP}"
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo ENVIRONMENT=production > "frontend/.env"
-            echo NODE_ENV=production >> "frontend/.env"
-            echo API_URL=$API_URL >> "frontend/.env"
-            echo $API_URL
-            
-      - run:
-          name: Build frontend
-          command: |
-            cd frontend
-            ls -la
-            cat .env
-            npm run build
-      - aws-cli/setup
-      - run:
-          name: Deploy frontend objects
-          command: |
-            aws s3 cp frontend/dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
-  
+
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations
