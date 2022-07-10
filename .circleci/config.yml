@@ -167,7 +167,7 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: cimg/aws
+      - image: cimg/base:2020.01
       # Docker image here
     steps:
       - checkout
