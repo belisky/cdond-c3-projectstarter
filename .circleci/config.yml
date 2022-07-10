@@ -347,7 +347,7 @@ jobs:
           name: Get backend url
           command: |
             export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)
-            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_IP}"
+            curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d "${BACKEND_IP}"
             export API_URL="http://${BACKEND_IP}:3030"
             echo ENVIRONMENT=production > frontend/.env
             echo NODE_ENV=production >> frontend/.env
@@ -415,13 +415,21 @@ jobs:
       - run:
           name: Get backend url
           command: |          
-            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls > backend-url.txt
+            curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls > backend-url.txt
+            curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl > backend-url1.txt
       - run:
           name: Backend smoke test.
           command: |
-            url1=$(cat backend-url.txt)     
-            url="http://${url1}:3030/api/status"             
+            url=$(cat backend-url.txt)  
+            url1=$(cat backend-url1.txt)  
+            echo $url  
+            echo $url1   
+            url="http://${url}:3030/api/status" 
+            url1="http://${url1}:3030/api/status" 
+            echo $url            
+            echo $url1            
             curl $url
+            curl $url1
         
       - run:
           name: Frontend smoke test.
