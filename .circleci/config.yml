@@ -208,11 +208,15 @@ jobs:
 
             echo $BACKEND_URL
             curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d "${BACKEND_IP}"
-
+      - run: yum -y install tar gzip
       - persist_to_workspace:
           root: .circleci/ansible
           paths:
             - inventory.txt 
+
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+     
   
 
   configure-infrastructure:
@@ -233,6 +237,7 @@ jobs:
           # install the dependencies needed for your playbook
           command: |   
             apk add --update ansible aws-cli
+            cat .circleci/ansible/inventory.txt
      
       - run:
           name: Configure server
@@ -251,6 +256,10 @@ jobs:
             ansible-playbook \
               -i /tmp/.circleci/ansible/inventory.txt \
               .circleci/ansible/configure-server.yml  
+
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+     
 
   run-migrations:
     docker:
