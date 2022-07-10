@@ -1,20 +1,15 @@
 ---
-- name: "installing npm"
-  become: yes
+- name: "upgrade packages."
+  become: true
   apt:
-    name: npm
-    update_cache: yes
+    upgrade: "yes"
+
+- name: "install dependencies."
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
     state: latest
-
-- name: Install nvm
-  become: yes
-  npm:
-    name: n
-    global: yes
-
-- name: install nodejs v13.8.0
-  become: yes
-  command: n 13.8.0
+    update_cache: yes
 
 - name: "installing pm2"
   become: yes
