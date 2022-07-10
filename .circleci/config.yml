@@ -415,7 +415,7 @@ jobs:
       - run:
           name: Get backend url
           command: |          
-            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl > backend-url.txt
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls > backend-url.txt
       - run:
           name: Backend smoke test.
           command: |
