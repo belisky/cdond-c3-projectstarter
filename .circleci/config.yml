@@ -208,7 +208,7 @@ jobs:
 
             echo $BACKEND_URL
             curl --insecure -H "Content-Type: text/plain" https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d "${BACKEND_IP}"
-      - run: yum -y install tar gzip
+    
       - persist_to_workspace:
           root: .circleci/ansible
           paths:
