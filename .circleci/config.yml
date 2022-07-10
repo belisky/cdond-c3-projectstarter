@@ -174,8 +174,7 @@ jobs:
       - aws-cli/setup
       - run:
           name: Ensure backend infrastructure exist
-          command: |
-            yum install -y tar gzip
+          command: |             
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
@@ -190,7 +189,7 @@ jobs:
               --tags project=udapeople \
               --stack-name udapeople-frontend-"${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"             
-              --stack-name udapeople-frontend-"${CIRCLE_WORKFLOW_ID:0:7}" 
+          
  
  
       - run:
