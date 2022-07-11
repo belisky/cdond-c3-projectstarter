@@ -1,0 +1,2 @@
+S3 BUCKET ENDPOINT 
+http://udapeople-8258ee5.s3-website-us-east-1.amazonaws.com
