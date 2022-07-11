@@ -199,7 +199,7 @@ jobs:
               --filters "Name=tag:project,Values=udapeople" \
               --output text >> .circleci/ansible/inventory.txt
             export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)            
-            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d $BACKEND_IP
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d $BACKEND_IP
              
 
 
