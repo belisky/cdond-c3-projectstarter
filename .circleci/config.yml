@@ -347,6 +347,7 @@ jobs:
           name: Get backend url
           command: |
             export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)
+            echo $BACKEND_IP
             curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d $BACKEND_IP
             export API_URL="http://${BACKEND_IP}:3030"
             echo ENVIRONMENT=production > frontend/.env
@@ -431,8 +432,8 @@ jobs:
             cat /.circleci/ansible/inventory.txt
             BACKEND_IP1=$(sed -n 2p /.circleci/ansible/inventory.txt)
             cat $BACKEND_IP
-            cat $BACKEND_IP1
-            cat $BACKEND_URL
+            echo $BACKEND_IP1
+            cat $BACKEND_IP1           
             curl "http://${BACKEND_IP}:3030"
             curl "http://${BACKEND_IP}:3030/api/status"
             curl "http://${BACKEND_IP1}:3030"
@@ -472,6 +473,7 @@ jobs:
             echo "${OldWorkflowID}"
             echo "${STACKS[@]}"
             # save oldworkflowid for the cleanup phase
+            echo $OldWorkflowID
             curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid -d $OldWorkflowID
             # promote
             aws cloudformation update-stack \
