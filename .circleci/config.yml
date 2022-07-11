@@ -463,16 +463,18 @@ jobs:
               --no-paginate --output text)
             export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
               --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
-            echo "${OldWorkflowID}"
+            echo "${OldWorkflowID}" >> ~/OldWorkflowID.txt
+            cat ~/OldWorkflowID.txt
             echo "${STACKS[@]}"
             # save oldworkflowid for the cleanup phase
             echo $OldWorkflowID
             curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid -d $OldWorkflowID
             # promote
-            aws cloudformation update-stack \
-              --use-previous-template \
-              --stack-name cloudfront-${OldWorkflowID} \
-              --parameters ParameterKey=WorkflowID,ParameterValue=$CIRCLE_WORKFLOW_ID,UsePreviousValue=false
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name "InitialStack-$OldWorkflowID" \
+              --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
