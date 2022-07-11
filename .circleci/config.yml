@@ -198,9 +198,9 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=udapeople" \
               --output text >> .circleci/ansible/inventory.txt
-              backend=$(cat .circleci/ansible/inventory.txt)
-              echo $backend
-              curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d $backend
+            backend=$(cat .circleci/ansible/inventory.txt)
+            echo $backend
+            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurl -d $backend
 
 
             export BACKEND_URL=$(aws cloudformation describe-stacks \
