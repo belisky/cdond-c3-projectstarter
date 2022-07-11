@@ -348,7 +348,7 @@ jobs:
           command: |
             export BACKEND_IP=$(sed -n 2p .circleci/ansible/inventory.txt)
             echo $BACKEND_IP
-            curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/backendurls -d $BACKEND_IP
+             
             export API_URL="http://${BACKEND_IP}:3030"
             echo ENVIRONMENT=production > frontend/.env
             echo NODE_ENV=production >> frontend/.env
