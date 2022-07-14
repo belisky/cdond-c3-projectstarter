@@ -16,7 +16,10 @@ commands:
       - run:          
           name: Destroy environments
           when: on_fail
-          command: |          
+          command: | 
+            if aws s3 ls | grep udapeople-${CIRCLE_WORKFLOW_ID:0:7}; then
+              aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            fi         
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
             aws cloudformation delete-stack --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:7}"
 
