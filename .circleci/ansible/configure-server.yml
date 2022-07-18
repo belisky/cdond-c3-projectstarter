@@ -22,11 +22,7 @@
         delay: 5
         timeout: 600
 
-    - name: "install paramiko"
-      become: yes
-      apt:
-        name: paramiko
-        state: latest
+ 
 
     - name: "install python for Ansible."
       become: yes
