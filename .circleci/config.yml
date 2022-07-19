@@ -492,7 +492,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Remove old stacks and files
+          name: Remove old stacks and files after blue-green deployment
           command: |
             export OldWorkflowID=$(curl --insecure https://kvdb.io/Dvw7Sb8Hz69YirzDipb8Ld/values/oldworkflowid)
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
