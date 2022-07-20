@@ -1,11 +1,18 @@
-We are archiving this repository because we do not want learners to push personal development to the current repository. If you have any issues or suggestions to make, feel free to:
-- Utilize the https://knowledge.udacity.com/ forum to seek help on content-specific issues.
-- [Submit a support ticket](https://udacity.zendesk.com/hc/en-us/requests/new) along with the link to your forked repository. 
-- If you are an enterprise learner, please [Submit a support ticket here](https://udacityenterprise.zendesk.com/hc/en-us/requests/new?ticket_form_id=360000279131)
+# Udapeople
 
-## Give your Application Auto-Deploy Superpowers
+This is **AWS** Cloud Devops project in which i built a **Blue-Green CI/CD** pipeline using **CircleCI** that:
 
-In this project, you will prove your mastery of the following learning objectives:
+- Sets up both frontend and Backend Infrastructure using cloudFormation templates,
+- Gives email/Slack notifications after a job fails,
+- Rolls back changes when there is a failed job in the deployment pipeline,
+- Monitors the state of Infrastructure(Servers) involved using prometheus.
+- Automatically configures Node-exporter jobs on servers using Ansible.
+- Gives email notifications when the Backend server is down etc
+
+## Give your Application Auto-Deploy Superpowers 
+### Udacity Cloud Devops Engineer (Project 3)
+
+In this project,I proved mastery of the following learning objectives:
 
 - Explain the fundamentals and benefits of CI/CD to achieve, build, and deploy automation for cloud-based software products.
 - Utilize Deployment Strategies to design and build CI/CD pipelines that support Continuous Delivery processes.
@@ -14,17 +21,8 @@ In this project, you will prove your mastery of the following learning objective
 
 ![Diagram of CI/CD Pipeline we will be building.](udapeople.png)
 
-### Instructions
-
-* [Selling CI/CD](instructions/0-selling-cicd.md)
-* [Getting Started](instructions/1-getting-started.md)
-* [Deploying Working, Trustworthy Software](instructions/2-deploying-trustworthy-code.md)
-* [Configuration Management](instructions/3-configuration-management.md)
-* [Turn Errors into Sirens](instructions/4-turn-errors-into-sirens.md)
-
-### Project Submission
-
-For your submission, please submit the following:
+ 
+### Evidence of Project completion. 
 
 - A text file named `urls.txt` including:
   1. Public Url to GitHub repository (not private) [URL01]
