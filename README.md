@@ -56,6 +56,7 @@ Before you submit your project, please check your work against the project rubri
 - [CloudFormation](https://aws.amazon.com/cloudformation/) - Infrastrcuture as code
 - [Ansible](https://www.ansible.com/) - Configuration management tool
 - [Prometheus](https://prometheus.io/) - Monitoring tool
+- [kvdb](https://kvdb.io/) - Key-value pair online storage service
 
 ### License
 
