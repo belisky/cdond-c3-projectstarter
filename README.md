@@ -2,7 +2,7 @@
 
 This is **AWS** Cloud Devops project in which i built a **Blue-Green CI/CD** pipeline using **CircleCI** that:
 
-- Sets up both frontend and Backend Infrastructure using cloudFormation templates,
+- Sets up both frontend and Backend Infrastructure using AWS cloudFormation templates,
 - Gives email/Slack notifications after a job fails,
 - Rolls back changes when there is a failed job in the deployment pipeline,
 - Monitors the state of Infrastructure(Servers) involved using prometheus.
@@ -61,3 +61,7 @@ Before you submit your project, please check your work against the project rubri
 ### License
 
 [License](LICENSE.md)
+
+## Appendix
+- A Section of the Pipeline
+![alt text](https://github.com/belisky/cdond-c3-projectstarter/blob/master/screenshots/SCREENSHOT10.jpg?raw=true)
