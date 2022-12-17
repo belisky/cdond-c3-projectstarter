@@ -63,5 +63,29 @@ Before you submit your project, please check your work against the project rubri
 [License](LICENSE.md)
 
 ## Appendix
-- A Section of the Pipeline
+- ### A Section of the Pipeline
 ![alt text](https://github.com/belisky/cdond-c3-projectstarter/blob/master/screenshots/SCREENSHOT10.jpg?raw=true)
+
+---
+- ### A Screenshot of the working app (A peek of UdaPeople Product)
+![alt text](https://github.com/belisky/cdond-c3-projectstarter/blob/master/screenshots/SCREENSHOT_WORKING_APP.jpg?raw=true)
+
+---
+- ### Prometheus Monitoring
+![alt text](https://github.com/belisky/cdond-c3-projectstarter/blob/master/screenshots/URL05_SCREENSHOT.jpg?raw=true)
+
+---
+- ### A sample Email for failed Server(production environment of Udapeople)
+![alt text](https://github.com/belisky/cdond-c3-projectstarter/blob/master/screenshots/SCREENSHOT12.jpg?raw=true)
+
+---
+- ### A sample Email for failed Pipeline Job
+![alt text](https://github.com/belisky/cdond-c3-projectstarter/blob/master/screenshots/SCREENSHOT04-00.jpg?raw=true)
+
+---
+- ### Switching From Blue to Green environment (Pipeline Job)
+![alt text](https://github.com/belisky/cdond-c3-projectstarter/blob/master/screenshots/SCREENSHOT08.jpg?raw=true)
+
+---
+- ### Rollback on Job Failure
+![alt text](https://github.com/belisky/cdond-c3-projectstarter/blob/master/screenshots/SCREENSHOT07.jpg?raw=true)
